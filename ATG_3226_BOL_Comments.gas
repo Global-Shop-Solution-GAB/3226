@@ -1,0 +1,167 @@
+Program.Sub.ScreenSU.Start
+gui.fBOL..create
+gui.fBOL..caption("BOL Comments")
+gui.fBOL..size(7515,6375)
+gui.fBOL..position(0,0)
+gui.fBOL..event(unload,fbol_unload)
+gui.fBOL..alwaysontop(False)
+gui.fBOL..fontname("Arial")
+gui.fBOL..fontsize(8)
+gui.fBOL..forecolor(0)
+gui.fBOL..fontstyle(,,,,)
+gui.fBOL..BackColor(-2147483633)
+gui.fBOL..controlbox(True)
+gui.fBOL..maxbutton(False)
+gui.fBOL..minbutton(True)
+gui.fBOL..mousepointer(0)
+gui.fBOL..moveable(False)
+gui.fBOL..sizeable(False)
+gui.fBOL..ShowInTaskBar(True)
+gui.fBOL..titlebar(True)
+gui.fBOL.mltxtCom.create(textboxm)
+gui.fBOL.mltxtCom.text("")
+gui.fBOL.mltxtCom.visible(True)
+gui.fBOL.mltxtCom.size(7095,4950)
+gui.fBOL.mltxtCom.zorder(0)
+gui.fBOL.mltxtCom.position(145,200)
+gui.fBOL.mltxtCom.enabled(True)
+gui.fBOL.mltxtCom.alignment(0)
+gui.fBOL.mltxtCom.fontname("Arial")
+gui.fBOL.mltxtCom.fontsize(8)
+gui.fBOL.mltxtCom.BackColor(-2147483643)
+gui.fBOL.cmdSave.create(button)
+gui.fBOL.cmdSave.caption("Save")
+gui.fBOL.cmdSave.visible(True)
+gui.fBOL.cmdSave.size(855,375)
+gui.fBOL.cmdSave.zorder(0)
+gui.fBOL.cmdSave.position(145,5300)
+gui.fBOL.cmdSave.enabled(True)
+gui.fBOL.cmdSave.fontname("Arial")
+gui.fBOL.cmdSave.fontsize(8)
+gui.fBOL.cmdSave.event(click,cmdsave_click)
+gui.fBOL.cmdDel.create(button)
+gui.fBOL.cmdDel.caption("Delete")
+gui.fBOL.cmdDel.visible(True)
+gui.fBOL.cmdDel.size(855,375)
+gui.fBOL.cmdDel.zorder(0)
+gui.fBOL.cmdDel.position(1100,5300)
+gui.fBOL.cmdDel.enabled(True)
+gui.fBOL.cmdDel.fontname("Arial")
+gui.fBOL.cmdDel.fontsize(8)
+gui.fBOL.cmdDel.event(click,cmddel_click)
+
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+
+Program.Sub.Main.Start
+'Coded by: MLA
+'Project Start Date: 12/28/2010
+'Hooks:
+'  32034,32035,32036
+'Notes:
+'  GKD
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+Gui.fBOL..Show
+F.Intrinsic.Control.CallSub(Load)
+
+Program.Sub.Main.End
+
+
+program.sub.fbol_unload.start
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+program.sub.fbol_unload.end
+
+
+program.sub.cmdsave_click.start
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Save_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.Intrinsic.String.Concat("Select * from ATG_3226_BOL_COMMENTS where WAYBILL = '",V.Passed.000006,"'",V.Local.sSql)
+F.ODBC.Connection!con.OpenRecordsetRW("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,"True")
+	F.ODBC.con!rst.AddNew
+	F.ODBC.con!rst.Set!WAYBILL(V.Passed.000006)
+	F.ODBC.con!rst.Set!COMMENT(V.Screen.fBOL!mltxtCom.Text)
+	F.ODBC.con!rst.Update
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Concat("Delete ATG_3226_BOL_COMMENTS where WAYBILL = '",V.Passed.000006,"'",V.Local.sSql)
+	F.ODBC.Connection!con.Execute(V.Local.sSql)
+	F.ODBC.con!rst.AddNew
+	F.ODBC.con!rst.Set!WAYBILL(V.Passed.000006)
+	F.ODBC.con!rst.Set!COMMENT(V.Screen.fBOL!mltxtCom.Text)
+	F.ODBC.con!rst.Update
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Save_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmdsave_click.end
+
+
+program.sub.cmddel_click.start
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Delete_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.Intrinsic.UI.Msgbox("Are you sure you want to delete?","Delete",1,V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,=,"1")
+	F.Intrinsic.String.Concat("Delete ATG_3226_BOL_COMMENTS where WAYBILL = '",V.Passed.000006,"'",V.Local.sSql)
+	F.ODBC.Connection!con.Execute(V.Local.sSql)
+	Gui.fBOL.mltxtCom.Text("")
+F.Intrinsic.Control.Else
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Delete_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmddel_click.end
+
+
+Program.Sub.Load.Start
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Load_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.Intrinsic.String.Concat("Select * from ATG_3226_BOL_COMMENTS where WAYBILL = '",V.Passed.000006,"'",V.Local.sSql)
+F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,<>,"True")
+	Gui.fBOL.mltxtCom.Text(V.ODBC.con!rst.FieldValTrim!COMMENT)
+F.Intrinsic.Control.EndIf
+F.ODBC.con!rst.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Load_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Load.End
+
+
+
